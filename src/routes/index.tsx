@@ -14,7 +14,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import jesusHug from "@/assets/jesus-hug-hero.png.asset.json";
+import abracoEternoHero from "@/assets/abraco-eterno-hero.png.asset.json";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
