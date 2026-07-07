@@ -171,12 +171,32 @@ function LandingPage() {
         if (cancelled) return;
         setResult({ processedUrl: data.data.processedUrl, imageUrl: publicUrl });
         setProcessingProgress(100);
+        void sendDiscordEvent({
+          stage: "result",
+          name: answers.name,
+          whatsapp,
+          q1: answers.q1,
+          q2: answers.q2,
+          q3: answers.q3,
+          imageUrl: publicUrl,
+          processedUrl: data.data.processedUrl,
+        });
         setTimeout(() => {
           if (!cancelled) setStep("preview");
         }, 600);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : String(e));
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg);
+        void sendDiscordEvent({
+          stage: "error",
+          name: answers.name,
+          whatsapp,
+          q1: answers.q1,
+          q2: answers.q2,
+          q3: answers.q3,
+          error: msg,
+        });
       }
     })();
 
