@@ -854,14 +854,70 @@ function PreviewStep({
         </p>
       </div>
 
+      <div className="bg-[#FDFBF7] p-6 rounded-3xl border border-[#EBE5D9] shadow-sm">
+        <h3 className="font-serif text-2xl font-bold text-[#3A3532] text-center mb-5">
+          Tudo o que você garante hoje:
+        </h3>
+        <ul className="space-y-4">
+          {[
+            {
+              icon: <Heart className="h-5 w-5" />,
+              title: "O Vídeo da Homenagem",
+              text: `${name || "Seu ente querido"} no encontro com Jesus, em paz, do jeito que sempre acreditou. Um vídeo emocionante feito com muito respeito.`,
+            },
+            {
+              icon: <MessageCircle className="h-5 w-5" />,
+              title: "Atendimento Humano no WhatsApp",
+              text: "Quem te atende é uma pessoa da nossa equipe. Após o pagamento, ela entra em contato pra confirmar os detalhes da homenagem e te avisar quando o vídeo estiver pronto.",
+            },
+            {
+              icon: <PlayCircle className="h-5 w-5" />,
+              title: "Vídeo Completo com Música",
+              text: "A homenagem finalizada em vídeo de alta qualidade, com uma trilha sonora de paz e acolhimento.",
+            },
+            {
+              icon: <Sparkles className="h-5 w-5" />,
+              title: "Finalizado à mão pelos nossos artistas",
+              text: `Cada homenagem é editada com calma pelos artistas da nossa equipe, tratada como obra única — do jeitinho que ${name || "quem você ama"} merece.`,
+            },
+          ].map((item) => (
+            <li key={item.title} className="flex gap-3">
+              <span className="grid place-items-center h-10 w-10 shrink-0 rounded-full border border-[#e8d9ae] text-[#8a6d3b] bg-white">
+                {item.icon}
+              </span>
+              <div className="space-y-1">
+                <p className="font-semibold text-[#3A3532] text-[15px]">{item.title}</p>
+                <p className="text-sm text-[#5C554D] leading-relaxed">{item.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <button
-        onClick={onCheckout}
-        className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-4 shadow-md transition flex items-center justify-center gap-2 animate-cta-pulse"
-      >
-        <Heart className="h-5 w-5 fill-white" />
-        Quero receber minha homenagem · {PRICE_LABEL}
-      </button>
+      <div className="bg-[#FDFBF7] p-6 rounded-3xl border border-[#EBE5D9] text-[#3A3532] text-[15px] leading-relaxed space-y-3">
+        <p>
+          Muitas vezes, a vida tira quem a gente ama antes que dê tempo de dizer adeus.
+          A gente existe pra devolver um pedacinho desse momento — com tecnologia e o carinho de uma equipe humana.
+        </p>
+        <p>
+          Nossos artistas vão cuidar de cada detalhe do rosto{name ? ` de ${name}` : ""}, da escada de luz, do encontro com Jesus.
+          Tudo editado à mão, com o respeito que essa homenagem merece.
+        </p>
+      </div>
+
+      <div className="sticky bottom-4 z-20 space-y-2">
+        <button
+          onClick={onCheckout}
+          className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-4 shadow-lg transition flex items-center justify-center gap-2 animate-cta-pulse"
+        >
+          <Heart className="h-5 w-5 fill-white" />
+          FINALIZAR MINHA HOMENAGEM
+        </button>
+        <p className="text-center text-xs text-[#5C554D]">
+          {name ? `${name} · ` : ""}{PRICE_LABEL} · Pix ou cartão · Garantia 100%
+        </p>
+      </div>
+
 
     </div>
   );
