@@ -823,20 +823,24 @@ function PreviewStep({
         <p className="text-center text-xs uppercase tracking-[0.2em] text-[#8a6d3b] font-semibold">
           O que as famílias estão dizendo
         </p>
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+        <div
+          className="flex gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] touch-pan-x overscroll-x-contain"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {[
             { src: print01.url, alt: "Cliente: Tô chorando, ficou lindo demais. Saudades da minha mãe" },
             { src: print02.url, alt: "Cliente: É assim que eu quero pensar no meu marido. Cumpriu sua missão na Terra e foi ao encontro de Jesus" },
             { src: print03.url, alt: "Cliente: Gostei até me emocionei, perdi meu filho num acidente de moto com apenas 20 anos" },
             { src: print05.url, alt: "Cliente: Não respondi antes porque confesso que fiquei emocionado. Acredito no fundo do meu coração que meu pai teve esse encontro com Jesus" },
           ].map((p) => (
-            <div key={p.src} className="snap-center shrink-0 w-[75%] sm:w-[55%]">
+            <div key={p.src} className="snap-start shrink-0 w-[62%] sm:w-[42%] md:w-[32%] lg:w-[24%]">
               <img
                 src={p.src}
                 alt={p.alt}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-auto rounded-2xl shadow-md border border-[#EBE5D9]"
+                draggable={false}
+                className="w-full h-auto rounded-2xl shadow-md border border-[#EBE5D9] select-none pointer-events-none"
               />
             </div>
           ))}
