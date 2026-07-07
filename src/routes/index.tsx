@@ -302,10 +302,56 @@ function LandingPage() {
         {step === "preview" && result && (
           <PreviewStep processedUrl={result.processedUrl} name={answers.name} />
         )}
+        {step === "preview" && result && (
+          <PreviewStep
+            processedUrl={result.processedUrl}
+            name={answers.name}
+            onCheckout={() => {
+              void sendDiscordEvent({
+                stage: "checkout_viewed",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+              });
+              setStep("checkout");
+            }}
+          />
+        )}
+        {step === "checkout" && result && (
+          <CheckoutStep
+            name={answers.name}
+            whatsapp={whatsapp}
+            processedUrl={result.processedUrl}
+            onPaid={(info) => {
+              void sendDiscordEvent({
+                stage: "paid",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+                method: info.method,
+                orderId: info.orderId,
+              });
+              setStep("paid");
+            }}
+            onFailed={(msg) => {
+              void sendDiscordEvent({
+                stage: "payment_failed",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+                error: msg,
+              });
+            }}
+          />
+        )}
+        {step === "paid" && (
+          <PaidStep whatsapp={whatsapp} name={answers.name} />
+        )}
       </main>
     </div>
   );
 }
+
 
 /* ---------- Steps ---------- */
 
