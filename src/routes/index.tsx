@@ -389,7 +389,7 @@ function Landing({ onStart }: { onStart: () => void }) {
       <div className="mx-auto w-[72%] max-w-[260px]">
         <img
           src={abracoEternoHero.url}
-          alt="Ilustração de Jesus abraçando com carinho"
+          alt="Jesus abraçando uma pessoa querida com carinho"
           width={768}
           height={768}
           className="w-full rounded-2xl shadow-[0_10px_40px_-15px_rgba(122,95,45,0.35)]"
