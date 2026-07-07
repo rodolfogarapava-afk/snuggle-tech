@@ -79,7 +79,7 @@ function Header() {
   return (
     <header className="border-b border-border/70 bg-background/95 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-lg px-4 py-4 flex items-center justify-center gap-1.5">
-        <span className="font-serif text-xl italic text-[#8a6d3b]">RevivaPic</span>
+        <span className="font-serif text-xl italic text-[#8a6d3b]">Alento</span>
         <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 [&>path]:stroke-white" />
       </div>
     </header>
@@ -678,7 +678,7 @@ function PreviewStep({ processedUrl, name }: { processedUrl: string; name: strin
                 key={i}
                 className="text-white/70 font-serif italic text-2xl tracking-wider drop-shadow"
               >
-                PRÉVIA REVIVAPIC
+                PRÉVIA · ALENTO
               </span>
             ))}
           </div>
