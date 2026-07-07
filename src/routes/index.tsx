@@ -54,7 +54,13 @@ type Step =
   | "upload"
   | "whatsapp"
   | "processing"
-  | "preview";
+  | "preview"
+  | "checkout"
+  | "paid";
+
+const PRICE_CENTS = 4700;
+const PRICE_LABEL = "R$ 47,00";
+
 
 const Q1_OPTIONS = [
   "Minha Mãe",
