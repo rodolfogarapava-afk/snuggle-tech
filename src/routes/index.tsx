@@ -15,6 +15,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import abracoEternoHero from "@/assets/abraco-eterno-hero.png.asset.json";
+import print01 from "@/assets/print-01-mae.webp.asset.json";
+import print02 from "@/assets/print-02-marido-jesus.webp.asset.json";
+import print03 from "@/assets/print-03-filho-acidente.webp.asset.json";
+import print05 from "@/assets/print-05-fernando-emocao.webp.asset.json";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
