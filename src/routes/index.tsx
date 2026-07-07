@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import jesusHug from "@/assets/jesus-hug.jpg";
+import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -77,10 +78,10 @@ const Q3_OPTIONS = [
 
 function Header() {
   return (
-    <header className="border-b border-border/70 bg-background/95 backdrop-blur sticky top-0 z-30">
+    <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-lg px-4 py-4 flex items-center justify-center gap-1.5">
-        <span className="font-serif text-xl italic text-[#8a6d3b]">RevivaPic</span>
-        <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 [&>path]:stroke-white" />
+        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Alento</span>
+        <BadgeCheck className="h-4 w-4 text-[#c9a24a] fill-[#c9a24a] [&>path]:stroke-white" />
       </div>
     </header>
   );
@@ -170,12 +171,32 @@ function LandingPage() {
         if (cancelled) return;
         setResult({ processedUrl: data.data.processedUrl, imageUrl: publicUrl });
         setProcessingProgress(100);
+        void sendDiscordEvent({
+          stage: "result",
+          name: answers.name,
+          whatsapp,
+          q1: answers.q1,
+          q2: answers.q2,
+          q3: answers.q3,
+          imageUrl: publicUrl,
+          processedUrl: data.data.processedUrl,
+        });
         setTimeout(() => {
           if (!cancelled) setStep("preview");
         }, 600);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : String(e));
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg);
+        void sendDiscordEvent({
+          stage: "error",
+          name: answers.name,
+          whatsapp,
+          q1: answers.q1,
+          q2: answers.q2,
+          q3: answers.q3,
+          error: msg,
+        });
       }
     })();
 
@@ -250,7 +271,17 @@ function LandingPage() {
           <WhatsappStep
             value={whatsapp}
             onChange={setWhatsapp}
-            onSubmit={() => setStep("processing")}
+            onSubmit={() => {
+              void sendDiscordEvent({
+                stage: "lead",
+                name: answers.name,
+                whatsapp,
+                q1: answers.q1,
+                q2: answers.q2,
+                q3: answers.q3,
+              });
+              setStep("processing");
+            }}
           />
         )}
         {step === "processing" && (
@@ -274,56 +305,54 @@ function LandingPage() {
 
 function Landing({ onStart }: { onStart: () => void }) {
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-[#e8d9ae] bg-[#fdf6e3] px-4 py-2.5 flex items-center justify-center gap-2 text-sm text-[#8a6d3b]">
-        <Clock className="h-4 w-4" />
+    <div className="space-y-6">
+      <div className="mx-auto w-fit rounded-full bg-[#fdf6e3] px-4 py-1.5 flex items-center gap-2 text-[13px] text-[#8a6d3b]">
+        <Clock className="h-3.5 w-3.5" />
         Restam 2 vagas com desconto hoje
       </div>
 
-      <div className="text-center space-y-3 pt-2">
-        <h1 className="font-serif text-[2.1rem] leading-tight font-bold text-foreground">
+      <div className="text-center space-y-4 pt-1">
+        <h1 className="font-serif text-[2rem] leading-[1.15] text-foreground">
           Um abraço de paz para acalmar a saudade.
         </h1>
-        <p className="text-muted-foreground text-[15px] leading-relaxed">
+        <p className="text-muted-foreground text-[15px] leading-relaxed max-w-sm mx-auto">
           Transforme a foto de quem deixou saudade em um{" "}
-          <span className="text-[#8a6d3b] font-semibold underline decoration-[#c9a24a]/60 underline-offset-2">
-            vídeo emocionante
-          </span>{" "}
-          de homenagem.
+          <span className="text-[#7a5f2d] font-medium">vídeo emocionante</span> de homenagem.
         </p>
       </div>
 
-      <div className="mx-auto w-[76%] max-w-[280px]">
+      <div className="mx-auto w-[72%] max-w-[260px]">
         <img
           src={jesusHug}
           alt="Ilustração de Jesus abraçando com carinho"
           width={768}
           height={768}
-          className="w-full rounded-lg shadow-lg ring-1 ring-black/5"
+          className="w-full rounded-2xl shadow-[0_10px_40px_-15px_rgba(122,95,45,0.35)]"
         />
       </div>
 
       <button
         onClick={onStart}
-        className="w-full rounded-lg bg-gradient-to-b from-[#c9a24a] to-[#a4802b] text-white font-bold uppercase tracking-wide py-4 shadow-md hover:brightness-105 active:scale-[0.99] transition flex items-center justify-center gap-3"
+        className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium tracking-wide py-4 shadow-sm active:scale-[0.99] transition flex items-center justify-center gap-2.5"
       >
+        <Heart className="h-4 w-4 fill-white" />
         Fazer simulação gratuita
-        <Heart className="h-5 w-5 fill-white" />
       </button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        (Veja sua prévia gratuita em instantes)
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Veja sua prévia gratuita em instantes
+        </p>
+        <p className="text-sm text-[#7a5f2d] flex items-center justify-center gap-1.5">
+          <Star className="h-3.5 w-3.5 fill-[#c9a24a] text-[#c9a24a]" />
+          4.9 · 3.247 famílias já se emocionaram
+        </p>
+        <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Rápido, seguro e feito com muito respeito.
+        </p>
+      </div>
 
-      <p className="text-center text-sm text-[#8a6d3b] font-medium flex items-center justify-center gap-1.5">
-        <Star className="h-4 w-4 fill-[#c9a24a] text-[#c9a24a]" />
-        4.9 · 3.247 famílias já se emocionaram
-      </p>
-
-      <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1.5">
-        <ShieldCheck className="h-4 w-4 text-[#8a6d3b]" />
-        Rápido, seguro e feito com muito respeito.
-      </p>
 
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <p className="text-center text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
@@ -439,7 +468,7 @@ function NameStep({
         />
         <button
           type="submit"
-          className="w-full rounded-xl bg-gradient-to-b from-[#c9a24a] to-[#a4802b] text-white font-semibold py-4 shadow-md hover:brightness-105 transition"
+          className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium py-4 shadow-sm transition"
         >
           Continuar
         </button>
@@ -678,7 +707,7 @@ function PreviewStep({ processedUrl, name }: { processedUrl: string; name: strin
                 key={i}
                 className="text-white/70 font-serif italic text-2xl tracking-wider drop-shadow"
               >
-                PRÉVIA REVIVAPIC
+                PRÉVIA · ALENTO
               </span>
             ))}
           </div>

@@ -77,9 +77,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RevivaPic — Um abraço de paz para acalmar a saudade" },
+      { title: "Alento — Um abraço de paz para acalmar a saudade" },
       { name: "description", content: "Transforme a foto de quem deixou saudade em um vídeo emocionante de homenagem. Rápido, seguro e feito com muito respeito." },
-      { property: "og:title", content: "RevivaPic — Um abraço de paz para acalmar a saudade" },
+      { property: "og:title", content: "Alento — Um abraço de paz para acalmar a saudade" },
       { property: "og:description", content: "Transforme a foto de quem deixou saudade em um vídeo emocionante de homenagem." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
