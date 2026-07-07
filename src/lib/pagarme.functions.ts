@@ -34,10 +34,16 @@ function authHeader() {
 function splitPhone(raw?: string) {
   const digits = (raw || "").replace(/\D/g, "");
   const withoutCountry = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
-  const area = withoutCountry.slice(0, 2) || "11";
-  const number = withoutCountry.slice(2) || "999999999";
-  return { area_code: area, number, country_code: "55" };
+  // Pagar.me exige DDD (2) + número (8 ou 9). Se o input for inválido, cai num fallback válido.
+  const isValid = /^\d{10,11}$/.test(withoutCountry) && !/^0+$/.test(withoutCountry);
+  const clean = isValid ? withoutCountry : "11999999999";
+  return {
+    area_code: clean.slice(0, 2),
+    number: clean.slice(2),
+    country_code: "55",
+  };
 }
+
 
 export const createPagarmeOrder = createServerFn({ method: "POST" })
   .inputValidator((data: CreateOrderInput) => data)
