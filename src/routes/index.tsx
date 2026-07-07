@@ -972,6 +972,16 @@ function CheckoutStep({
               Copiar código Pix
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPix(null);
+              setTab("credit_card");
+            }}
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground py-2 transition"
+          >
+            Prefiro pagar com cartão de crédito
+          </button>
           <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Aguardando confirmação do pagamento...
