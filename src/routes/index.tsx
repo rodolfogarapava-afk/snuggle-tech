@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import jesusHug from "@/assets/jesus-hug.jpg";
+import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -77,10 +78,10 @@ const Q3_OPTIONS = [
 
 function Header() {
   return (
-    <header className="border-b border-border/70 bg-background/95 backdrop-blur sticky top-0 z-30">
+    <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-lg px-4 py-4 flex items-center justify-center gap-1.5">
-        <span className="font-serif text-xl italic text-[#8a6d3b]">Alento</span>
-        <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 [&>path]:stroke-white" />
+        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Alento</span>
+        <BadgeCheck className="h-4 w-4 text-[#c9a24a] fill-[#c9a24a] [&>path]:stroke-white" />
       </div>
     </header>
   );
