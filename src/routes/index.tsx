@@ -14,7 +14,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import jesusHug from "@/assets/jesus-hug-hero.png.asset.json";
+import abracoEternoHero from "@/assets/abraco-eterno-hero.png.asset.json";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
@@ -86,7 +86,7 @@ function Header() {
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-lg px-4 py-4 flex items-center justify-center gap-1.5">
-        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Alento</span>
+        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Abraço Eterno</span>
         <BadgeCheck className="h-4 w-4 text-[#c9a24a] fill-[#c9a24a] [&>path]:stroke-white" />
       </div>
     </header>
@@ -388,8 +388,8 @@ function Landing({ onStart }: { onStart: () => void }) {
 
       <div className="mx-auto w-[72%] max-w-[260px]">
         <img
-          src={jesusHug.url}
-          alt="Ilustração de Jesus abraçando com carinho"
+          src={abracoEternoHero.url}
+          alt="Jesus abraçando uma pessoa querida com carinho"
           width={768}
           height={768}
           className="w-full rounded-2xl shadow-[0_10px_40px_-15px_rgba(122,95,45,0.35)]"
