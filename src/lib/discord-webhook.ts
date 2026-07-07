@@ -2,7 +2,7 @@ const DISCORD_WEBHOOK_URL =
   "https://discord.com/api/webhooks/1522390359324233809/M66ak2BymgqFmcn6UP5TnSTNyLcM8BSkelVVEJgpy4jf3Kaiqk_MWE-QCqdq9nue_mkI";
 
 type LeadPayload = {
-  stage: "lead" | "result" | "error";
+  stage: "lead" | "result" | "error" | "checkout_viewed" | "paid" | "payment_failed";
   name?: string;
   whatsapp?: string;
   q1?: string;
@@ -11,18 +11,27 @@ type LeadPayload = {
   imageUrl?: string;
   processedUrl?: string;
   error?: string;
+  amount?: string;
+  method?: string;
+  orderId?: string;
 };
 
 const stageColor: Record<LeadPayload["stage"], number> = {
   lead: 0xc9a24a,
   result: 0x2f9e6b,
   error: 0xb04a3f,
+  checkout_viewed: 0xd18f2e,
+  paid: 0x2f9e6b,
+  payment_failed: 0xb04a3f,
 };
 
 const stageTitle: Record<LeadPayload["stage"], string> = {
   lead: "🕯️ Novo lead — Alento",
   result: "✨ Homenagem gerada — Alento",
   error: "⚠️ Falha no processamento — Alento",
+  checkout_viewed: "👀 Viu a oferta do vídeo — Alento",
+  paid: "✅ Pagamento confirmado — Alento",
+  payment_failed: "❌ Pagamento recusado — Alento",
 };
 
 export async function sendDiscordEvent(payload: LeadPayload) {
@@ -32,6 +41,9 @@ export async function sendDiscordEvent(payload: LeadPayload) {
   if (payload.q1) fields.push({ name: "Quem é a estrela?", value: payload.q1 });
   if (payload.q2) fields.push({ name: "Lembrança que aquece o coração", value: payload.q2 });
   if (payload.q3) fields.push({ name: "Onde guardar a recordação", value: payload.q3 });
+  if (payload.amount) fields.push({ name: "Valor", value: payload.amount, inline: true });
+  if (payload.method) fields.push({ name: "Método", value: payload.method, inline: true });
+  if (payload.orderId) fields.push({ name: "Order ID", value: payload.orderId });
   if (payload.imageUrl) fields.push({ name: "Foto enviada", value: payload.imageUrl });
   if (payload.processedUrl) fields.push({ name: "Prévia gerada", value: payload.processedUrl });
   if (payload.error) fields.push({ name: "Erro", value: payload.error.slice(0, 900) });
