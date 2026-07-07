@@ -468,7 +468,7 @@ function NameStep({
         />
         <button
           type="submit"
-          className="w-full rounded-xl bg-gradient-to-b from-[#c9a24a] to-[#a4802b] text-white font-semibold py-4 shadow-md hover:brightness-105 transition"
+          className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium py-4 shadow-sm transition"
         >
           Continuar
         </button>
