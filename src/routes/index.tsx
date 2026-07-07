@@ -396,30 +396,6 @@ function Landing({ onStart }: { onStart: () => void }) {
         />
       </div>
 
-      <div className="bg-[#FDFBF7] p-6 md:p-8 rounded-3xl shadow-sm border border-[#EBE5D9] mb-10 text-center">
-        <h3 className="font-serif text-2xl font-bold text-[#3A3532] mb-4">
-          Como ficará a sua Homenagem?
-        </h3>
-        <p className="text-[#5C554D] text-sm mb-6">
-          Veja este <strong>exemplo real do nosso trabalho final</strong> — o momento do reencontro com Jesus, em vídeo.
-        </p>
-        <div className="aspect-[9/16] rounded-2xl overflow-hidden bg-black relative max-w-[280px] mx-auto shadow-2xl border-4 border-white">
-          <video
-            src="https://cabihyuullm57wir.public.blob.vercel-storage.com/videoabracojesus_web.webm"
-            preload="none"
-            autoPlay
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-            muted
-          />
-          <div className="absolute top-4 left-4 right-4 text-center pointer-events-none">
-            <span className="bg-[#C5A059] text-white text-xs font-bold uppercase tracking-wider py-1.5 px-3 rounded-full shadow-md">
-              Homenagem de Exemplo
-            </span>
-          </div>
-        </div>
-      </div>
 
       <button
         onClick={onStart}
