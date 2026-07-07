@@ -271,7 +271,17 @@ function LandingPage() {
           <WhatsappStep
             value={whatsapp}
             onChange={setWhatsapp}
-            onSubmit={() => setStep("processing")}
+            onSubmit={() => {
+              void sendDiscordEvent({
+                stage: "lead",
+                name: answers.name,
+                whatsapp,
+                q1: answers.q1,
+                q2: answers.q2,
+                q3: answers.q3,
+              });
+              setStep("processing");
+            }}
           />
         )}
         {step === "processing" && (
