@@ -107,14 +107,12 @@ export const createPagarmeOrder = createServerFn({ method: "POST" })
         };
       }>;
       message?: string;
-      errors?: unknown;
     };
 
     if (!res.ok) {
       return {
         success: false as const,
         error: json?.message || `HTTP ${res.status}`,
-        details: json,
       };
     }
 
