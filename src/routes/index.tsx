@@ -333,7 +333,7 @@ function Landing({ onStart }: { onStart: () => void }) {
 
       <button
         onClick={onStart}
-        className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium tracking-wide py-4 shadow-sm active:scale-[0.99] transition flex items-center justify-center gap-2.5"
+        className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium tracking-wide py-4 shadow-sm active:scale-[0.99] transition flex items-center justify-center gap-2.5 animate-cta-pulse"
       >
         <Heart className="h-4 w-4 fill-white" />
         Fazer simulação gratuita
