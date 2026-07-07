@@ -794,6 +794,55 @@ function PreviewStep({
         </div>
       </div>
 
+      <div className="bg-[#FDFBF7] p-5 rounded-3xl shadow-sm border border-[#EBE5D9] text-center">
+        <h3 className="font-serif text-xl font-bold text-[#3A3532] mb-2">
+          Como ficará a sua Homenagem em vídeo?
+        </h3>
+        <p className="text-[#5C554D] text-sm mb-4">
+          Veja um <strong>exemplo real</strong> — o momento do reencontro com Jesus.
+        </p>
+        <div className="aspect-[9/16] rounded-2xl overflow-hidden bg-black relative max-w-[240px] mx-auto shadow-2xl border-4 border-white">
+          <video
+            src="https://cabihyuullm57wir.public.blob.vercel-storage.com/videoabracojesus_web.webm"
+            preload="none"
+            autoPlay
+            loop
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-3 left-3 right-3 text-center pointer-events-none">
+            <span className="bg-[#C5A059] text-white text-[10px] font-bold uppercase tracking-wider py-1 px-2.5 rounded-full shadow-md">
+              Homenagem de Exemplo
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-center text-xs uppercase tracking-[0.2em] text-[#8a6d3b] font-semibold">
+          O que as famílias estão dizendo
+        </p>
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          {[
+            { src: print01.url, alt: "Cliente: Tô chorando, ficou lindo demais. Saudades da minha mãe" },
+            { src: print02.url, alt: "Cliente: É assim que eu quero pensar no meu marido. Cumpriu sua missão na Terra e foi ao encontro de Jesus" },
+            { src: print03.url, alt: "Cliente: Gostei até me emocionei, perdi meu filho num acidente de moto com apenas 20 anos" },
+            { src: print05.url, alt: "Cliente: Não respondi antes porque confesso que fiquei emocionado. Acredito no fundo do meu coração que meu pai teve esse encontro com Jesus" },
+          ].map((p) => (
+            <div key={p.src} className="snap-center shrink-0 w-[75%] sm:w-[55%]">
+              <img
+                src={p.src}
+                alt={p.alt}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto rounded-2xl shadow-md border border-[#EBE5D9]"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="rounded-xl border border-[#e8d9ae] bg-[#fdf6e3] p-4 flex gap-3">
         <Sparkles className="h-5 w-5 text-[#8a6d3b] shrink-0 mt-0.5" />
         <p className="text-sm text-foreground leading-relaxed">
@@ -804,6 +853,7 @@ function PreviewStep({
           Em até <strong>24 horas</strong> ele chega no seu WhatsApp. 💛
         </p>
       </div>
+
 
       <button
         onClick={onCheckout}
