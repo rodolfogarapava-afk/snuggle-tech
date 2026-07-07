@@ -305,56 +305,54 @@ function LandingPage() {
 
 function Landing({ onStart }: { onStart: () => void }) {
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-[#e8d9ae] bg-[#fdf6e3] px-4 py-2.5 flex items-center justify-center gap-2 text-sm text-[#8a6d3b]">
-        <Clock className="h-4 w-4" />
+    <div className="space-y-6">
+      <div className="mx-auto w-fit rounded-full bg-[#fdf6e3] px-4 py-1.5 flex items-center gap-2 text-[13px] text-[#8a6d3b]">
+        <Clock className="h-3.5 w-3.5" />
         Restam 2 vagas com desconto hoje
       </div>
 
-      <div className="text-center space-y-3 pt-2">
-        <h1 className="font-serif text-[2.1rem] leading-tight font-bold text-foreground">
+      <div className="text-center space-y-4 pt-1">
+        <h1 className="font-serif text-[2rem] leading-[1.15] text-foreground">
           Um abraço de paz para acalmar a saudade.
         </h1>
-        <p className="text-muted-foreground text-[15px] leading-relaxed">
+        <p className="text-muted-foreground text-[15px] leading-relaxed max-w-sm mx-auto">
           Transforme a foto de quem deixou saudade em um{" "}
-          <span className="text-[#8a6d3b] font-semibold underline decoration-[#c9a24a]/60 underline-offset-2">
-            vídeo emocionante
-          </span>{" "}
-          de homenagem.
+          <span className="text-[#7a5f2d] font-medium">vídeo emocionante</span> de homenagem.
         </p>
       </div>
 
-      <div className="mx-auto w-[76%] max-w-[280px]">
+      <div className="mx-auto w-[72%] max-w-[260px]">
         <img
           src={jesusHug}
           alt="Ilustração de Jesus abraçando com carinho"
           width={768}
           height={768}
-          className="w-full rounded-lg shadow-lg ring-1 ring-black/5"
+          className="w-full rounded-2xl shadow-[0_10px_40px_-15px_rgba(122,95,45,0.35)]"
         />
       </div>
 
       <button
         onClick={onStart}
-        className="w-full rounded-lg bg-gradient-to-b from-[#c9a24a] to-[#a4802b] text-white font-bold uppercase tracking-wide py-4 shadow-md hover:brightness-105 active:scale-[0.99] transition flex items-center justify-center gap-3"
+        className="w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium tracking-wide py-4 shadow-sm active:scale-[0.99] transition flex items-center justify-center gap-2.5"
       >
+        <Heart className="h-4 w-4 fill-white" />
         Fazer simulação gratuita
-        <Heart className="h-5 w-5 fill-white" />
       </button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        (Veja sua prévia gratuita em instantes)
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Veja sua prévia gratuita em instantes
+        </p>
+        <p className="text-sm text-[#7a5f2d] flex items-center justify-center gap-1.5">
+          <Star className="h-3.5 w-3.5 fill-[#c9a24a] text-[#c9a24a]" />
+          4.9 · 3.247 famílias já se emocionaram
+        </p>
+        <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Rápido, seguro e feito com muito respeito.
+        </p>
+      </div>
 
-      <p className="text-center text-sm text-[#8a6d3b] font-medium flex items-center justify-center gap-1.5">
-        <Star className="h-4 w-4 fill-[#c9a24a] text-[#c9a24a]" />
-        4.9 · 3.247 famílias já se emocionaram
-      </p>
-
-      <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1.5">
-        <ShieldCheck className="h-4 w-4 text-[#8a6d3b]" />
-        Rápido, seguro e feito com muito respeito.
-      </p>
 
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <p className="text-center text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
