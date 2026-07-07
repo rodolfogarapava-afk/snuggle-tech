@@ -110,20 +110,37 @@ export const createPagarmeOrder = createServerFn({ method: "POST" })
           qr_code_url?: string;
           expires_at?: string;
           acquirer_message?: string;
+          gateway_response?: { errors?: Array<{ message?: string }> };
         };
       }>;
       message?: string;
+      errors?: Record<string, string[]>;
     };
 
     if (!res.ok) {
+      const flatErrors = json?.errors
+        ? Object.values(json.errors).flat().join(" · ")
+        : "";
       return {
         success: false as const,
-        error: json?.message || `HTTP ${res.status}`,
+        error: flatErrors || json?.message || `HTTP ${res.status}`,
       };
     }
 
     const charge = json.charges?.[0];
     const tx = charge?.last_transaction;
+
+    // Pagar.me pode devolver HTTP 200 com charge "failed" (ex.: telefone/CPF inválido).
+    if (charge?.status === "failed" || (data.method === "pix" && !tx?.qr_code)) {
+      const gatewayMsg = tx?.gateway_response?.errors?.[0]?.message;
+      return {
+        success: false as const,
+        error:
+          tx?.acquirer_message ||
+          gatewayMsg ||
+          "Pagamento recusado pelo Pagar.me. Verifique os dados (telefone, CPF, cartão) e tente novamente.",
+      };
+    }
 
     return {
       success: true as const,
@@ -141,6 +158,7 @@ export const createPagarmeOrder = createServerFn({ method: "POST" })
       acquirerMessage: tx?.acquirer_message,
     };
   });
+
 
 export const getPagarmeOrderStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { orderId: string }) => d)
