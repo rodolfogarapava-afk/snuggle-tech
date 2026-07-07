@@ -14,7 +14,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import jesusHug from "@/assets/jesus-hug.jpg";
+import jesusHug from "@/assets/jesus-hug-hero.png.asset.json";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
@@ -323,7 +323,7 @@ function Landing({ onStart }: { onStart: () => void }) {
 
       <div className="mx-auto w-[72%] max-w-[260px]">
         <img
-          src={jesusHug}
+          src={jesusHug.url}
           alt="Ilustração de Jesus abraçando com carinho"
           width={768}
           height={768}
