@@ -54,7 +54,13 @@ type Step =
   | "upload"
   | "whatsapp"
   | "processing"
-  | "preview";
+  | "preview"
+  | "checkout"
+  | "paid";
+
+const PRICE_CENTS = 4700;
+const PRICE_LABEL = "R$ 47,00";
+
 
 const Q1_OPTIONS = [
   "Minha Mãe",
@@ -294,12 +300,55 @@ function LandingPage() {
           />
         )}
         {step === "preview" && result && (
-          <PreviewStep processedUrl={result.processedUrl} name={answers.name} />
+          <PreviewStep
+            processedUrl={result.processedUrl}
+            name={answers.name}
+            onCheckout={() => {
+              void sendDiscordEvent({
+                stage: "checkout_viewed",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+              });
+              setStep("checkout");
+            }}
+          />
+        )}
+        {step === "checkout" && result && (
+          <CheckoutStep
+            name={answers.name}
+            whatsapp={whatsapp}
+            processedUrl={result.processedUrl}
+            onPaid={(info) => {
+              void sendDiscordEvent({
+                stage: "paid",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+                method: info.method,
+                orderId: info.orderId,
+              });
+              setStep("paid");
+            }}
+            onFailed={(msg) => {
+              void sendDiscordEvent({
+                stage: "payment_failed",
+                name: answers.name,
+                whatsapp,
+                amount: PRICE_LABEL,
+                error: msg,
+              });
+            }}
+          />
+        )}
+        {step === "paid" && (
+          <PaidStep whatsapp={whatsapp} name={answers.name} />
         )}
       </main>
     </div>
   );
 }
+
 
 /* ---------- Steps ---------- */
 
@@ -681,7 +730,15 @@ function ProcessingStep({
   );
 }
 
-function PreviewStep({ processedUrl, name }: { processedUrl: string; name: string }) {
+function PreviewStep({
+  processedUrl,
+  name,
+  onCheckout,
+}: {
+  processedUrl: string;
+  name: string;
+  onCheckout: () => void;
+}) {
   return (
     <div className="pt-4 space-y-5">
       <div className="text-center space-y-2">
@@ -725,10 +782,323 @@ function PreviewStep({ processedUrl, name }: { processedUrl: string; name: strin
         </p>
       </div>
 
-      <button className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-4 shadow-md transition flex items-center justify-center gap-2">
-        <MessageCircle className="h-5 w-5 fill-white" />
-        Quero minha homenagem completa
+      <button
+        onClick={onCheckout}
+        className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-4 shadow-md transition flex items-center justify-center gap-2 animate-cta-pulse"
+      >
+        <Heart className="h-5 w-5 fill-white" />
+        Quero minha homenagem completa · {PRICE_LABEL}
       </button>
     </div>
   );
 }
+
+function CheckoutStep({
+  name,
+  whatsapp,
+  processedUrl,
+  onPaid,
+  onFailed,
+}: {
+  name: string;
+  whatsapp: string;
+  processedUrl: string;
+  onPaid: (info: { method: string; orderId: string }) => void;
+  onFailed: (msg: string) => void;
+}) {
+  const [tab, setTab] = useState<"pix" | "credit_card">("pix");
+  const [email, setEmail] = useState("");
+  const [document, setDocument] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [pix, setPix] = useState<{ qrCode: string; qrCodeUrl?: string; orderId: string } | null>(
+    null,
+  );
+
+  // Card fields
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExp, setCardExp] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [installments, setInstallments] = useState(1);
+
+  // Poll Pix status
+  useEffect(() => {
+    if (!pix?.orderId) return;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      try {
+        const { getPagarmeOrderStatus } = await import("@/lib/pagarme.functions");
+        const res = await getPagarmeOrderStatus({ data: { orderId: pix.orderId } });
+        if (cancelled) return;
+        if (res.paid) {
+          clearInterval(interval);
+          onPaid({ method: "pix", orderId: pix.orderId });
+        }
+      } catch {
+        // ignore
+      }
+    }, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pix, onPaid]);
+
+  async function submit() {
+    setErr(null);
+    if (!email.trim()) {
+      setErr("Informe o e-mail para envio do recibo.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { createPagarmeOrder } = await import("@/lib/pagarme.functions");
+      const customer = {
+        name: name || "Cliente Alento",
+        email: email.trim(),
+        document: document.replace(/\D/g, ""),
+        phone: whatsapp,
+      };
+      const metadata = {
+        whatsapp,
+        ente: name || "—",
+        processedUrl,
+      };
+
+      if (tab === "pix") {
+        const res = await createPagarmeOrder({
+          data: {
+            method: "pix",
+            amount: PRICE_CENTS,
+            customer,
+            metadata,
+          },
+        });
+        if (!res.success) throw new Error(res.error);
+        if (!res.pix) throw new Error("QR Code não retornado.");
+        setPix({
+          qrCode: res.pix.qrCode,
+          qrCodeUrl: res.pix.qrCodeUrl,
+          orderId: res.orderId,
+        });
+      } else {
+        const [mm, yy] = cardExp.split("/").map((s) => s.trim());
+        const expMonth = Number(mm);
+        const expYear = Number(yy?.length === 2 ? "20" + yy : yy);
+        if (!expMonth || !expYear) throw new Error("Validade do cartão inválida (MM/AA).");
+        const res = await createPagarmeOrder({
+          data: {
+            method: "credit_card",
+            amount: PRICE_CENTS,
+            customer,
+            metadata,
+            card: {
+              number: cardNumber.replace(/\s/g, ""),
+              holder_name: cardHolder,
+              exp_month: expMonth,
+              exp_year: expYear,
+              cvv: cardCvv,
+              installments,
+            },
+          },
+        });
+        if (!res.success) throw new Error(res.error);
+        if (res.chargeStatus === "paid" || res.status === "paid") {
+          onPaid({ method: "credit_card", orderId: res.orderId });
+        } else {
+          const msg = res.acquirerMessage || "Cartão recusado pela operadora.";
+          setErr(msg);
+          onFailed(msg);
+        }
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg);
+      onFailed(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (pix) {
+    const qrImg = pix.qrCodeUrl
+      ? pix.qrCodeUrl
+      : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(pix.qrCode)}`;
+    return (
+      <div className="pt-4 space-y-5">
+        <div className="text-center space-y-2">
+          <h2 className="font-serif text-[1.6rem] font-bold">Pague com Pix para liberar</h2>
+          <p className="text-muted-foreground text-sm">
+            Assim que o pagamento for confirmado, você é levado(a) para a próxima etapa
+            automaticamente.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div className="mx-auto w-fit rounded-lg bg-white p-3 border border-border">
+            <img src={qrImg} alt="QR Code Pix" className="h-64 w-64" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Ou copie o código Pix:</p>
+            <textarea
+              readOnly
+              value={pix.qrCode}
+              className="w-full text-xs bg-muted rounded-md p-2 h-24 font-mono"
+              onFocus={(e) => e.currentTarget.select()}
+            />
+            <button
+              onClick={() => navigator.clipboard.writeText(pix.qrCode)}
+              className="mt-2 w-full rounded-xl bg-[#a4802b] hover:bg-[#8f6f22] text-white font-medium py-3 transition"
+            >
+              Copiar código Pix
+            </button>
+          </div>
+          <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Aguardando confirmação do pagamento...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-4 space-y-5">
+      <div className="text-center space-y-2">
+        <h2 className="font-serif text-[1.6rem] leading-tight font-bold text-foreground">
+          Finalize a homenagem de {name || "seu ente querido"}
+        </h2>
+        <p className="text-muted-foreground text-[14px]">
+          Vídeo completo em até 24h no seu WhatsApp.
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-[#fdf6e3] border border-[#e8d9ae] p-4 flex items-center justify-between">
+        <span className="text-sm text-[#8a6d3b] font-medium">Homenagem em vídeo</span>
+        <span className="font-serif text-xl text-[#7a5f2d] font-bold">{PRICE_LABEL}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+        <button
+          onClick={() => setTab("pix")}
+          className={`rounded-lg py-2.5 text-sm font-medium transition ${tab === "pix" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}
+        >
+          Pix (instantâneo)
+        </button>
+        <button
+          onClick={() => setTab("credit_card")}
+          className={`rounded-lg py-2.5 text-sm font-medium transition ${tab === "credit_card" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}
+        >
+          Cartão de crédito
+        </button>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          placeholder="Seu e-mail (recibo)"
+          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+        />
+        <input
+          value={document}
+          onChange={(e) => setDocument(e.target.value)}
+          inputMode="numeric"
+          placeholder="CPF (apenas números)"
+          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+        />
+
+        {tab === "credit_card" && (
+          <>
+            <input
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              inputMode="numeric"
+              placeholder="Número do cartão"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+            />
+            <input
+              value={cardHolder}
+              onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+              placeholder="Nome impresso no cartão"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={cardExp}
+                onChange={(e) => setCardExp(e.target.value)}
+                placeholder="Validade (MM/AA)"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+              />
+              <input
+                value={cardCvv}
+                onChange={(e) => setCardCvv(e.target.value)}
+                inputMode="numeric"
+                placeholder="CVV"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c9a24a]/40"
+              />
+            </div>
+            <select
+              value={installments}
+              onChange={(e) => setInstallments(Number(e.target.value))}
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm"
+            >
+              {[1, 2, 3].map((n) => (
+                <option key={n} value={n}>
+                  {n}x de R$ {(47 / n).toFixed(2).replace(".", ",")} sem juros
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+      </div>
+
+      {err && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          {err}
+        </div>
+      )}
+
+      <button
+        onClick={submit}
+        disabled={loading}
+        className="w-full rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-4 shadow-md transition flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <ShieldCheck className="h-5 w-5" />
+        )}
+        {tab === "pix" ? `Gerar Pix · ${PRICE_LABEL}` : `Pagar ${PRICE_LABEL}`}
+      </button>
+
+      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Pagamento processado pela Pagar.me — ambiente seguro.
+      </p>
+    </div>
+  );
+}
+
+function PaidStep({ whatsapp, name }: { whatsapp: string; name: string }) {
+  return (
+    <div className="pt-8 space-y-6 text-center">
+      <div className="mx-auto grid place-items-center h-20 w-20 rounded-full bg-green-100">
+        <Check className="h-10 w-10 text-green-600" />
+      </div>
+      <h2 className="font-serif text-[1.8rem] leading-tight font-bold text-foreground">
+        Pagamento confirmado 💛
+      </h2>
+      <p className="text-muted-foreground text-[15px] leading-relaxed max-w-sm mx-auto">
+        A homenagem de <strong>{name || "seu ente querido"}</strong> entrou pra fila dos nossos
+        artistas. Em até <strong>24h</strong> você recebe o vídeo completo no WhatsApp{" "}
+        <span className="text-green-700 font-medium">{whatsapp}</span>.
+      </p>
+      <div className="rounded-xl border border-[#e8d9ae] bg-[#fdf6e3] p-4 text-sm text-[#8a6d3b] max-w-sm mx-auto">
+        Guarde este número: qualquer dúvida, é só responder por lá.
+      </div>
+    </div>
+  );
+}
+
