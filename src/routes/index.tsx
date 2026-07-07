@@ -759,14 +759,16 @@ function PreviewStep({
     <div className="pt-4 space-y-5">
       <div className="text-center space-y-2">
         <h2 className="font-serif text-[1.8rem] leading-tight font-bold text-foreground">
-          Uma prévia da homenagem de {name || "seu ente querido"}.
+          Olha só o começo da homenagem{name ? ` de ${name}` : ""}…
         </h2>
-        <p className="text-muted-foreground text-[15px]">Imagina isso em vídeo, com música.</p>
+        <p className="text-muted-foreground text-[15px]">
+          E isso é só um pedacinho. Imagina em vídeo, com música suave.
+        </p>
       </div>
 
       <div className="relative overflow-hidden rounded-xl border border-border bg-card">
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 rounded-md bg-black/70 text-white text-[11px] uppercase tracking-wider px-3 py-1 font-semibold">
-          Primeiros traços · Antes dos retoques
+          Prévia · ainda sem os retoques finais
         </div>
         <div className="relative">
           <img
@@ -790,11 +792,11 @@ function PreviewStep({
       <div className="rounded-xl border border-[#e8d9ae] bg-[#fdf6e3] p-4 flex gap-3">
         <Sparkles className="h-5 w-5 text-[#8a6d3b] shrink-0 mt-0.5" />
         <p className="text-sm text-foreground leading-relaxed">
-          <strong>Esse é só o começo do trabalho.</strong>
+          <strong>A gente ainda tá cuidando dos detalhes com muito carinho.</strong>
           <br />
-          Após o pagamento, nossos artistas finalizam cada detalhe do rosto de{" "}
-          <strong>seu ente querido</strong>, das transições e da música — em até 24h você recebe
-          o vídeo no seu WhatsApp.
+          Nossa equipe finaliza à mão cada tracinho do rosto{name ? ` de ${name}` : " de quem você ama"},
+          coloca uma música que aquece o peito e monta o vídeo inteirinho.
+          Em até <strong>24 horas</strong> ele chega no seu WhatsApp. 💛
         </p>
       </div>
 
@@ -803,8 +805,9 @@ function PreviewStep({
         className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-4 shadow-md transition flex items-center justify-center gap-2 animate-cta-pulse"
       >
         <Heart className="h-5 w-5 fill-white" />
-        Quero minha homenagem completa · {PRICE_LABEL}
+        Quero receber minha homenagem · {PRICE_LABEL}
       </button>
+
     </div>
   );
 }
