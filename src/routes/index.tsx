@@ -300,9 +300,6 @@ function LandingPage() {
           />
         )}
         {step === "preview" && result && (
-          <PreviewStep processedUrl={result.processedUrl} name={answers.name} />
-        )}
-        {step === "preview" && result && (
           <PreviewStep
             processedUrl={result.processedUrl}
             name={answers.name}
