@@ -153,27 +153,43 @@ function LandingPage() {
         if (!upRes.ok) throw new Error(`Upload falhou (${upRes.status})`);
         const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${filePath}`;
 
-        const payload = {
-          imageUrl: publicUrl,
-          answers: {
-            "Quem é a estrela que brilha no céu hoje?": answers.q1,
-            [`Qual é a lembrança de ${answers.name || "seu ente querido"} que mais aquece o seu coração?`]:
-              answers.q2,
-            "Onde você deseja guardar esta Recordação de Luz?": answers.q3,
-          },
-          customerName: answers.name || "—",
-          whatsapp,
-        };
+        // Modo demo: pula a IA (útil quando o limite diário da API foi atingido).
+        // Ativa com ?demo=1 na URL.
+        const isDemo =
+          typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("demo") === "1";
 
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/process-homenagem`, {
-          method: "POST",
-          headers: apiHeaders({ "content-type": "application/json" }),
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json().catch(async () => ({ raw: await res.text() }));
-        if (!res.ok || !data.success) {
-          throw new Error(`Falha ao processar (${res.status})`);
+        let processedUrl = publicUrl;
+
+        if (!isDemo) {
+          const payload = {
+            imageUrl: publicUrl,
+            answers: {
+              "Quem é a estrela que brilha no céu hoje?": answers.q1,
+              [`Qual é a lembrança de ${answers.name || "seu ente querido"} que mais aquece o seu coração?`]:
+                answers.q2,
+              "Onde você deseja guardar esta Recordação de Luz?": answers.q3,
+            },
+            customerName: answers.name || "—",
+            whatsapp,
+          };
+
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/process-homenagem`, {
+            method: "POST",
+            headers: apiHeaders({ "content-type": "application/json" }),
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(async () => ({ raw: await res.text() }));
+          if (!res.ok || !data.success) {
+            throw new Error(`Falha ao processar (${res.status})`);
+          }
+          processedUrl = data.data.processedUrl;
+        } else {
+          // Simula o tempo de processamento
+          await new Promise((r) => setTimeout(r, 1500));
         }
+
+        const data = { data: { processedUrl } };
         if (cancelled) return;
         setResult({ processedUrl: data.data.processedUrl, imageUrl: publicUrl });
         setProcessingProgress(100);
