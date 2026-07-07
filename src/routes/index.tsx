@@ -86,7 +86,7 @@ function Header() {
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-lg px-4 py-4 flex items-center justify-center gap-1.5">
-        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Alento</span>
+        <span className="font-serif text-[1.35rem] text-[#7a5f2d] tracking-wide">Abraço Eterno</span>
         <BadgeCheck className="h-4 w-4 text-[#c9a24a] fill-[#c9a24a] [&>path]:stroke-white" />
       </div>
     </header>
@@ -388,7 +388,7 @@ function Landing({ onStart }: { onStart: () => void }) {
 
       <div className="mx-auto w-[72%] max-w-[260px]">
         <img
-          src={jesusHug.url}
+          src={abracoEternoHero.url}
           alt="Ilustração de Jesus abraçando com carinho"
           width={768}
           height={768}
