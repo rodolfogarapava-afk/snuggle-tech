@@ -62,8 +62,8 @@ type Step =
   | "checkout"
   | "paid";
 
-const PRICE_CENTS = 4700;
-const PRICE_LABEL = "R$ 47,00";
+const PRICE_CENTS = 100;
+const PRICE_LABEL = "R$ 1,00";
 const PRICE_VALUE = PRICE_CENTS / 100;
 const PRODUCT_CONTENT = {
   content_id: "abraco-eterno-video",
