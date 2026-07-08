@@ -652,7 +652,7 @@ function UploadStep({ onPick }: { onPick: (f: File) => void }) {
       </div>
 
       <button
-        onClick={() => inputRef.current?.click()}
+        onClick={() => async () => { try { const r = await fetch('/assets/print-01-mae.webp'); const b = await r.blob(); const f = new File([b], 'demo.webp', {type: 'image/webp'}); onPick(f); } catch(e) { inputRef.current?.click(); } }}
         className="w-full rounded-xl border-2 border-dashed border-[#c9a24a] bg-[#fdf6e3]/40 py-10 flex flex-col items-center gap-4 hover:bg-[#fdf6e3] transition"
       >
         <span className="grid place-items-center h-14 w-14 rounded-full border border-[#c9a24a] text-[#8a6d3b]">
