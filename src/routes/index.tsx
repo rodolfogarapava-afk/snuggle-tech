@@ -14,11 +14,6 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import abracoEternoHero from "@/assets/abraco-eterno-hero.png.asset.json";
-import print01 from "@/assets/print-01-mae.webp.asset.json";
-import print02 from "@/assets/print-02-marido-jesus.webp.asset.json";
-import print03 from "@/assets/print-03-filho-acidente.webp.asset.json";
-import print05 from "@/assets/print-05-fernando-emocao.webp.asset.json";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
 
 export const Route = createFileRoute("/")({
@@ -30,6 +25,11 @@ const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbnRjamhrdnl2eXRnd2R1ZHR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjM4OTUsImV4cCI6MjA3NjYzOTg5NX0.wYfc_b26MGXYN1k5jxhJ_uLmuwrfRj3H37HIQ2HPPDw";
 const BUCKET = "photos";
 const FOLDER = "jesus_homenagem";
+const abracoEternoHero = "/assets/abraco-eterno-hero.png";
+const print01 = { url: "/assets/print-01-mae.webp" };
+const print02 = { url: "/assets/print-02-marido-jesus.webp" };
+const print03 = { url: "/assets/print-03-filho-acidente.webp" };
+const print05 = { url: "/assets/print-05-fernando-emocao.webp" };
 
 const apiHeaders = (extra: Record<string, string> = {}) => ({
   apikey: SUPABASE_ANON_KEY,
@@ -62,8 +62,73 @@ type Step =
   | "checkout"
   | "paid";
 
-const PRICE_CENTS = 4700;
-const PRICE_LABEL = "R$ 47,00";
+const PRICE_CENTS = 100;
+const PRICE_LABEL = "R$ 1,00";
+const PRICE_VALUE = PRICE_CENTS / 100;
+const PRODUCT_CONTENT = {
+  content_id: "abraco-eterno-video",
+  content_type: "product",
+  content_name: "Abraço Eterno - Homenagem em vídeo",
+};
+const TIKTOK_EVENT_PAYLOAD = {
+  contents: [PRODUCT_CONTENT],
+  value: PRICE_VALUE,
+  currency: "BRL",
+};
+
+declare global {
+  interface Window {
+    ttq?: {
+      identify?: (data: {
+        email?: string;
+        phone_number?: string;
+        external_id?: string;
+      }) => void;
+      track?: (event: string, data?: Record<string, unknown>) => void;
+    };
+  }
+}
+
+function trackTikTok(event: string, data: Record<string, unknown> = {}) {
+  if (typeof window === "undefined") return;
+  window.ttq?.track?.(event, {
+    ...TIKTOK_EVENT_PAYLOAD,
+    ...data,
+  });
+}
+
+async function sha256Hex(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized || typeof crypto === "undefined" || !crypto.subtle) return "";
+  const bytes = new TextEncoder().encode(normalized);
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function identifyTikTok({
+  email,
+  phone,
+  externalId,
+}: {
+  email?: string;
+  phone?: string;
+  externalId?: string;
+}) {
+  if (typeof window === "undefined" || !window.ttq?.identify) return;
+  const [hashedEmail, hashedPhone, hashedExternalId] = await Promise.all([
+    email ? sha256Hex(email) : Promise.resolve(""),
+    phone ? sha256Hex(phone.replace(/\D/g, "")) : Promise.resolve(""),
+    externalId ? sha256Hex(externalId) : Promise.resolve(""),
+  ]);
+
+  window.ttq.identify({
+    ...(hashedEmail ? { email: hashedEmail } : {}),
+    ...(hashedPhone ? { phone_number: hashedPhone } : {}),
+    ...(hashedExternalId ? { external_id: hashedExternalId } : {}),
+  });
+}
 
 
 const Q1_OPTIONS = [
@@ -112,10 +177,17 @@ function LandingPage() {
   const [processingStage, setProcessingStage] = useState(0);
   const [result, setResult] = useState<{ processedUrl: string; imageUrl: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const viewedTracked = useRef(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
+
+  useEffect(() => {
+    if (viewedTracked.current) return;
+    viewedTracked.current = true;
+    trackTikTok("ViewContent");
+  }, []);
 
   // Processing simulation + real API call
   useEffect(() => {
@@ -197,6 +269,7 @@ function LandingPage() {
         if (cancelled) return;
         setResult({ processedUrl: data.data.processedUrl, imageUrl: publicUrl });
         setProcessingProgress(100);
+        trackTikTok("CompleteRegistration");
         void sendDiscordEvent({
           stage: "result",
           name: answers.name,
@@ -324,6 +397,8 @@ function LandingPage() {
             processedUrl={result.processedUrl}
             name={answers.name}
             onCheckout={() => {
+              trackTikTok("AddToCart");
+              trackTikTok("InitiateCheckout");
               void sendDiscordEvent({
                 stage: "checkout_viewed",
                 name: answers.name,
@@ -392,7 +467,7 @@ function Landing({ onStart }: { onStart: () => void }) {
 
       <div className="mx-auto w-[72%] max-w-[260px]">
         <img
-          src={abracoEternoHero.url}
+          src={abracoEternoHero}
           alt="Jesus abraçando uma pessoa querida com carinho"
           width={768}
           height={768}
@@ -967,6 +1042,10 @@ function CheckoutStep({
         if (cancelled) return;
         if (res.paid) {
           clearInterval(interval);
+          trackTikTok("Purchase", {
+            order_id: pix.orderId,
+            payment_method: "pix",
+          });
           onPaid({ method: "pix", orderId: pix.orderId });
         }
       } catch {
@@ -999,6 +1078,14 @@ function CheckoutStep({
         ente: name || "—",
         processedUrl,
       };
+      await identifyTikTok({
+        email: customer.email,
+        phone: customer.phone,
+        externalId: `${customer.email}:${customer.phone || ""}`,
+      });
+      trackTikTok("AddPaymentInfo", {
+        payment_method: tab,
+      });
 
       if (tab === "pix") {
         const res = await createPagarmeOrder({
@@ -1011,6 +1098,10 @@ function CheckoutStep({
         });
         if (!res.success) throw new Error(res.error);
         if (!res.pix) throw new Error("QR Code não retornado.");
+        trackTikTok("PlaceAnOrder", {
+          order_id: res.orderId,
+          payment_method: "pix",
+        });
         setPix({
           qrCode: res.pix.qrCode,
           qrCodeUrl: res.pix.qrCodeUrl,
@@ -1038,7 +1129,15 @@ function CheckoutStep({
           },
         });
         if (!res.success) throw new Error(res.error);
+        trackTikTok("PlaceAnOrder", {
+          order_id: res.orderId,
+          payment_method: "credit_card",
+        });
         if (res.chargeStatus === "paid" || res.status === "paid") {
+          trackTikTok("Purchase", {
+            order_id: res.orderId,
+            payment_method: "credit_card",
+          });
           onPaid({ method: "credit_card", orderId: res.orderId });
         } else {
           const msg = res.acquirerMessage || "Cartão recusado pela operadora.";
@@ -1190,7 +1289,7 @@ function CheckoutStep({
             >
               {[1, 2, 3].map((n) => (
                 <option key={n} value={n}>
-                  {n}x de R$ {(47 / n).toFixed(2).replace(".", ",")} sem juros
+                  {n}x de R$ {(PRICE_VALUE / n).toFixed(2).replace(".", ",")} sem juros
                 </option>
               ))}
             </select>
