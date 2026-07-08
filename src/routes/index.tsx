@@ -14,7 +14,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import { sendDiscordEvent } from "@/lib/discord-webhook";
+import { sendDiscordEvent } from "@/lib/discord-webhook"; import "@/lib/facebook-pixel";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -186,7 +186,7 @@ function LandingPage() {
   useEffect(() => {
     if (viewedTracked.current) return;
     viewedTracked.current = true;
-    trackTikTok("ViewContent");
+    trackTikTok("ViewContent");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "ViewContent", { content_name: "Abraço Eterno - Homenagem em vídeo", content_ids: ["abraco-eterno-video"], content_type: "product", value: PRICE_VALUE, currency: "BRL" });       }
   }, []);
 
   // Processing simulation + real API call
@@ -398,7 +398,7 @@ function LandingPage() {
             name={answers.name}
             onCheckout={() => {
               trackTikTok("AddToCart");
-              trackTikTok("InitiateCheckout");
+              trackTikTok("InitiateCheckout");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "InitiateCheckout", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 });       }
               void sendDiscordEvent({
                 stage: "checkout_viewed",
                 name: answers.name,
