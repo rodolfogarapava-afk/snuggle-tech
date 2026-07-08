@@ -63,8 +63,8 @@ type Step =
   | "checkout"
   | "paid";
 
-const PRICE_CENTS = 4700;
-const PRICE_LABEL = "R$ 47,00";
+const PRICE_CENTS = 3900;
+const PRICE_LABEL = "R$ 39,00";
 const PRICE_VALUE = PRICE_CENTS / 100;
 const BUMP_CENTS = 1990;
 const BUMP_LABEL = "R$ 19,90";
