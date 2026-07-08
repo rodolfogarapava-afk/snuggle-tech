@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { sendDiscordEvent } from "@/lib/discord-webhook";
+import "@/lib/facebook-pixel";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -186,7 +187,7 @@ function LandingPage() {
   useEffect(() => {
     if (viewedTracked.current) return;
     viewedTracked.current = true;
-    trackTikTok("ViewContent");
+    trackTikTok("ViewContent");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "ViewContent", { content_name: "Abraço Eterno - Homenagem em vídeo", content_ids: ["abraco-eterno-video"], content_type: "product", value: PRICE_VALUE, currency: "BRL" });       }
   }, []);
 
   // Processing simulation + real API call
@@ -398,7 +399,7 @@ function LandingPage() {
             name={answers.name}
             onCheckout={() => {
               trackTikTok("AddToCart");
-              trackTikTok("InitiateCheckout");
+              trackTikTok("InitiateCheckout");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "InitiateCheckout", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 });       }
               void sendDiscordEvent({
                 stage: "checkout_viewed",
                 name: answers.name,
@@ -630,7 +631,6 @@ function NameStep({
 }
 
 function UploadStep({ onPick }: { onPick: (f: File) => void }) {
-  const inputId = "photo-upload";
   return (
     <div className="pt-8 space-y-5">
       <div className="text-center space-y-3">
@@ -651,27 +651,26 @@ function UploadStep({ onPick }: { onPick: (f: File) => void }) {
         </p>
       </div>
 
-      <label
-        htmlFor={inputId}
-        className="w-full cursor-pointer rounded-xl border-2 border-dashed border-[#c9a24a] bg-[#fdf6e3]/40 py-10 flex flex-col items-center gap-4 hover:bg-[#fdf6e3] transition"
+      <div
+        className="relative w-full overflow-hidden rounded-xl border-2 border-dashed border-[#c9a24a] bg-[#fdf6e3]/40 py-10 flex flex-col items-center gap-4 hover:bg-[#fdf6e3] transition"
       >
-        <span className="grid place-items-center h-14 w-14 rounded-full border border-[#c9a24a] text-[#8a6d3b]">
+        <input
+          type="file"
+          accept="image/*"
+          aria-label="Escolher foto da galeria"
+          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onPick(f);
+          }}
+        />
+        <span className="pointer-events-none grid place-items-center h-14 w-14 rounded-full border border-[#c9a24a] text-[#8a6d3b]">
           <ImageIcon className="h-6 w-6" />
         </span>
-        <span className="font-bold uppercase tracking-wide text-foreground">
+        <span className="pointer-events-none font-bold uppercase tracking-wide text-foreground">
           Escolher foto da galeria
         </span>
-      </label>
-      <input
-        id={inputId}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onPick(f);
-        }}
-      />
+      </div>
 
       <p className="text-center text-sm text-muted-foreground">
         Sua foto será tratada com o máximo de respeito e privacidade.
@@ -1046,7 +1045,7 @@ function CheckoutStep({
             order_id: pix.orderId,
             payment_method: "pix",
           });
-          onPaid({ method: "pix", orderId: pix.orderId });
+          if (typeof window !== "undefined" && typeof window.fbq === "function") { window.fbq("track", "Purchase", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 }); } onPaid({ method: "pix", orderId: pix.orderId });
         }
       } catch {
         // ignore
