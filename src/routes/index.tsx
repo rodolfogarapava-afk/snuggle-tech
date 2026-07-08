@@ -66,6 +66,10 @@ type Step =
 const PRICE_CENTS = 4700;
 const PRICE_LABEL = "R$ 47,00";
 const PRICE_VALUE = PRICE_CENTS / 100;
+const BUMP_CENTS = 1990;
+const BUMP_LABEL = "R$ 19,90";
+const BUMP_VALUE = BUMP_CENTS / 100;
+const formatBRL = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 const PRODUCT_CONTENT = {
   content_id: "abraco-eterno-video",
   content_type: "product",
@@ -76,6 +80,37 @@ const TIKTOK_EVENT_PAYLOAD = {
   value: PRICE_VALUE,
   currency: "BRL",
 };
+
+function getCommercePayload(value: number) {
+  return {
+    contents: [
+      {
+        ...PRODUCT_CONTENT,
+        price: value,
+        quantity: 1,
+      },
+    ],
+    value,
+    currency: "BRL",
+  };
+}
+
+function trackMetaCommerce(
+  event: "ViewContent" | "InitiateCheckout" | "Purchase",
+  value: number,
+  params: Record<string, unknown> = {},
+) {
+  if (typeof window === "undefined" || typeof window.fbq !== "function") return;
+  window.fbq("track", event, {
+    content_name: PRODUCT_CONTENT.content_name,
+    content_ids: [PRODUCT_CONTENT.content_id],
+    content_type: PRODUCT_CONTENT.content_type,
+    value,
+    currency: "BRL",
+    num_items: 1,
+    ...params,
+  });
+}
 
 declare global {
   interface Window {
@@ -187,7 +222,8 @@ function LandingPage() {
   useEffect(() => {
     if (viewedTracked.current) return;
     viewedTracked.current = true;
-    trackTikTok("ViewContent");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "ViewContent", { content_name: "Abraço Eterno - Homenagem em vídeo", content_ids: ["abraco-eterno-video"], content_type: "product", value: PRICE_VALUE, currency: "BRL" });       }
+    trackTikTok("ViewContent");
+    trackMetaCommerce("ViewContent", PRICE_VALUE);
   }, []);
 
   // Processing simulation + real API call
@@ -399,7 +435,8 @@ function LandingPage() {
             name={answers.name}
             onCheckout={() => {
               trackTikTok("AddToCart");
-              trackTikTok("InitiateCheckout");       if (typeof window !== "undefined" && typeof window.fbq === "function") {         window.fbq("track", "InitiateCheckout", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 });       }
+              trackTikTok("InitiateCheckout");
+              trackMetaCommerce("InitiateCheckout", PRICE_VALUE);
               void sendDiscordEvent({
                 stage: "checkout_viewed",
                 name: answers.name,
@@ -420,7 +457,7 @@ function LandingPage() {
                 stage: "paid",
                 name: answers.name,
                 whatsapp,
-                amount: PRICE_LABEL,
+                amount: info.amount || PRICE_LABEL,
                 method: info.method,
                 orderId: info.orderId,
               });
@@ -1011,7 +1048,7 @@ function CheckoutStep({
   name: string;
   whatsapp: string;
   processedUrl: string;
-  onPaid: (info: { method: string; orderId: string }) => void;
+  onPaid: (info: { method: string; orderId: string; amount?: string }) => void;
   onFailed: (msg: string) => void;
 }) {
   const [tab, setTab] = useState<"pix" | "credit_card">("pix");
@@ -1019,9 +1056,15 @@ function CheckoutStep({
   const [document, setDocument] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [pix, setPix] = useState<{ qrCode: string; qrCodeUrl?: string; orderId: string } | null>(
-    null,
-  );
+  const [bump, setBump] = useState(false);
+  const [pix, setPix] = useState<{
+    qrCode: string;
+    qrCodeUrl?: string;
+    orderId: string;
+    amountValue: number;
+    amountLabel: string;
+    hasBump: boolean;
+  } | null>(null);
 
   // Card fields
   const [cardNumber, setCardNumber] = useState("");
@@ -1029,6 +1072,10 @@ function CheckoutStep({
   const [cardExp, setCardExp] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [installments, setInstallments] = useState(1);
+
+  const totalCents = PRICE_CENTS + (bump ? BUMP_CENTS : 0);
+  const totalValue = totalCents / 100;
+  const totalLabel = formatBRL(totalValue);
 
   // Poll Pix status
   useEffect(() => {
@@ -1042,10 +1089,17 @@ function CheckoutStep({
         if (res.paid) {
           clearInterval(interval);
           trackTikTok("Purchase", {
+            ...getCommercePayload(pix.amountValue),
             order_id: pix.orderId,
             payment_method: "pix",
+            bump_selected: pix.hasBump,
           });
-          if (typeof window !== "undefined" && typeof window.fbq === "function") { window.fbq("track", "Purchase", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 }); } onPaid({ method: "pix", orderId: pix.orderId });
+          trackMetaCommerce("Purchase", pix.amountValue, {
+            order_id: pix.orderId,
+            payment_method: "pix",
+            bump_selected: pix.hasBump,
+          });
+          onPaid({ method: "pix", orderId: pix.orderId, amount: pix.amountLabel });
         }
       } catch {
         // ignore
@@ -1076,6 +1130,8 @@ function CheckoutStep({
         whatsapp,
         ente: name || "—",
         processedUrl,
+        bump: bump ? "foto-cristo-19.90" : "no",
+        total: totalLabel,
       };
       await identifyTikTok({
         email: customer.email,
@@ -1083,14 +1139,16 @@ function CheckoutStep({
         externalId: `${customer.email}:${customer.phone || ""}`,
       });
       trackTikTok("AddPaymentInfo", {
+        ...getCommercePayload(totalValue),
         payment_method: tab,
+        bump_selected: bump,
       });
 
       if (tab === "pix") {
         const res = await createPagarmeOrder({
           data: {
             method: "pix",
-            amount: PRICE_CENTS,
+            amount: totalCents,
             customer,
             metadata,
           },
@@ -1098,13 +1156,18 @@ function CheckoutStep({
         if (!res.success) throw new Error(res.error);
         if (!res.pix) throw new Error("QR Code não retornado.");
         trackTikTok("PlaceAnOrder", {
+          ...getCommercePayload(totalValue),
           order_id: res.orderId,
           payment_method: "pix",
+          bump_selected: bump,
         });
         setPix({
           qrCode: res.pix.qrCode,
           qrCodeUrl: res.pix.qrCodeUrl,
           orderId: res.orderId,
+          amountValue: totalValue,
+          amountLabel: totalLabel,
+          hasBump: bump,
         });
       } else {
         const [mm, yy] = cardExp.split("/").map((s) => s.trim());
@@ -1114,7 +1177,7 @@ function CheckoutStep({
         const res = await createPagarmeOrder({
           data: {
             method: "credit_card",
-            amount: PRICE_CENTS,
+            amount: totalCents,
             customer,
             metadata,
             card: {
@@ -1129,15 +1192,24 @@ function CheckoutStep({
         });
         if (!res.success) throw new Error(res.error);
         trackTikTok("PlaceAnOrder", {
+          ...getCommercePayload(totalValue),
           order_id: res.orderId,
           payment_method: "credit_card",
+          bump_selected: bump,
         });
         if (res.chargeStatus === "paid" || res.status === "paid") {
           trackTikTok("Purchase", {
+            ...getCommercePayload(totalValue),
             order_id: res.orderId,
             payment_method: "credit_card",
+            bump_selected: bump,
           });
-          onPaid({ method: "credit_card", orderId: res.orderId });
+          trackMetaCommerce("Purchase", totalValue, {
+            order_id: res.orderId,
+            payment_method: "credit_card",
+            bump_selected: bump,
+          });
+          onPaid({ method: "credit_card", orderId: res.orderId, amount: totalLabel });
         } else {
           const msg = res.acquirerMessage || "Cartão recusado pela operadora.";
           setErr(msg);
@@ -1215,23 +1287,106 @@ function CheckoutStep({
         </p>
       </div>
 
-      <div className="rounded-xl bg-[#fdf6e3] border border-[#e8d9ae] p-4 flex items-center justify-between">
-        <span className="text-sm text-[#8a6d3b] font-medium">Homenagem em vídeo</span>
-        <span className="font-serif text-xl text-[#7a5f2d] font-bold">{PRICE_LABEL}</span>
+      <div className="rounded-xl bg-[#fdf6e3] border border-[#e8d9ae] p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-[#8a6d3b] font-medium">Homenagem em vídeo</span>
+          <span className="font-serif text-xl text-[#7a5f2d] font-bold">{PRICE_LABEL}</span>
+        </div>
+        {bump && (
+          <div className="flex items-center justify-between text-sm border-t border-[#e8d9ae] pt-2">
+            <span className="text-[#8a6d3b]">+ Foto Emocionante com Cristo</span>
+            <span className="text-[#7a5f2d] font-semibold">{BUMP_LABEL}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-[#e8d9ae] pt-2">
+          <span className="text-xs uppercase tracking-wider text-[#8a6d3b]">Total</span>
+          <span className="font-serif text-2xl text-[#7a5f2d] font-bold">{totalLabel}</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+      {/* Order bump */}
+      <div
+        className={`rounded-xl border-2 border-dashed transition overflow-hidden ${bump ? "border-green-600 bg-green-50/60" : "border-[#c9a24a]/60 bg-[#fffaf0]"}`}
+      >
+        <div className="bg-[#0f5132] text-white px-4 py-2 flex items-center justify-between text-sm font-semibold">
+          <span className="flex items-center gap-2">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-white/15 text-[11px]">%</span>
+            Oferta limitada
+          </span>
+          {bump && <Check className="h-4 w-4" />}
+        </div>
+        <label className="flex gap-3 p-4 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={bump}
+            onChange={(e) => setBump(e.target.checked)}
+            className="mt-1 h-5 w-5 accent-green-700"
+          />
+          <div className="flex-1 space-y-1">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="font-semibold text-foreground text-[15px]">
+                Foto Emocionante com Cristo ✝️
+              </span>
+              <span className="text-xs bg-green-700 text-white rounded-full px-2 py-0.5 font-bold">
+                50% OFF
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Para os momentos em que a saudade apertar: tenha esse abraço sempre ao seu lado.
+              Foto pronta para imprimir e colocar ao lado de sua cama.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-xs text-muted-foreground line-through">R$ 39,90</span>
+              <span className="text-green-700 font-bold">{BUMP_LABEL}</span>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      {/* Payment method — vertical column with SVG icons */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+          Forma de pagamento
+        </p>
         <button
+          type="button"
           onClick={() => setTab("pix")}
-          className={`rounded-lg py-2.5 text-sm font-medium transition ${tab === "pix" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}
+          className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition ${tab === "pix" ? "border-green-600 bg-green-50/60" : "border-border bg-card hover:border-muted-foreground/40"}`}
         >
-          Pix (instantâneo)
+          <span className="grid place-items-center h-10 w-10 rounded-lg bg-white border border-border shrink-0">
+            <svg viewBox="0 0 32 32" className="h-6 w-6" aria-hidden="true">
+              <path fill="#32BCAD" d="M23.2 21.3a3.4 3.4 0 0 1-2.4-1L17.4 17c-.5-.5-1.4-.5-1.9 0l-3.4 3.3a3.4 3.4 0 0 1-2.4 1H8.9l4.3 4.3a4 4 0 0 0 5.6 0l4.3-4.3h-.9zM8.9 10.7c.9 0 1.7.3 2.4 1l3.4 3.3c.5.5 1.4.5 1.9 0l3.4-3.3a3.4 3.4 0 0 1 2.4-1h.9l-4.3-4.3a4 4 0 0 0-5.6 0l-4.3 4.3h.8z"/>
+              <path fill="#32BCAD" d="m26.6 13.5-2.6-2.6h-.8c-.6 0-1.3.3-1.7.7l-3.4 3.3c-.7.7-1.6 1-2.5 1a3.5 3.5 0 0 1-2.5-1l-3.5-3.4c-.4-.4-1-.7-1.7-.7h-1L4.4 13.5a4 4 0 0 0 0 5.6L7 21.7h1c.6 0 1.3-.3 1.7-.7l3.5-3.4c1.3-1.3 3.6-1.3 5 0l3.4 3.3c.4.4 1 .7 1.7.7h.8l2.6-2.6a4 4 0 0 0 0-5.6z"/>
+            </svg>
+          </span>
+          <span className="flex-1">
+            <span className="block font-semibold text-foreground text-[15px]">Pix</span>
+            <span className="block text-xs text-muted-foreground">Aprovação instantânea</span>
+          </span>
+          <span className={`h-5 w-5 rounded-full border-2 grid place-items-center ${tab === "pix" ? "border-green-600" : "border-muted-foreground/40"}`}>
+            {tab === "pix" && <span className="h-2.5 w-2.5 rounded-full bg-green-600" />}
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setTab("credit_card")}
-          className={`rounded-lg py-2.5 text-sm font-medium transition ${tab === "credit_card" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}
+          className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition ${tab === "credit_card" ? "border-green-600 bg-green-50/60" : "border-border bg-card hover:border-muted-foreground/40"}`}
         >
-          Cartão de crédito
+          <span className="grid place-items-center h-10 w-10 rounded-lg bg-white border border-border shrink-0">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true" fill="none" stroke="#0f5132" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+              <line x1="6" y1="15" x2="10" y2="15" />
+            </svg>
+          </span>
+          <span className="flex-1">
+            <span className="block font-semibold text-foreground text-[15px]">Cartão de crédito</span>
+            <span className="block text-xs text-muted-foreground">Até 3x sem juros</span>
+          </span>
+          <span className={`h-5 w-5 rounded-full border-2 grid place-items-center ${tab === "credit_card" ? "border-green-600" : "border-muted-foreground/40"}`}>
+            {tab === "credit_card" && <span className="h-2.5 w-2.5 rounded-full bg-green-600" />}
+          </span>
         </button>
       </div>
 
@@ -1288,7 +1443,7 @@ function CheckoutStep({
             >
               {[1, 2, 3].map((n) => (
                 <option key={n} value={n}>
-                  {n}x de R$ {(PRICE_VALUE / n).toFixed(2).replace(".", ",")} sem juros
+                  {n}x de {formatBRL(totalValue / n)} sem juros
                 </option>
               ))}
             </select>
@@ -1312,7 +1467,7 @@ function CheckoutStep({
         ) : (
           <ShieldCheck className="h-5 w-5" />
         )}
-        {tab === "pix" ? `Gerar Pix · ${PRICE_LABEL}` : `Pagar ${PRICE_LABEL}`}
+        {tab === "pix" ? `Gerar Pix · ${totalLabel}` : `Pagar ${totalLabel}`}
       </button>
 
       <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
