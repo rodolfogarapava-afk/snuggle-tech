@@ -1046,7 +1046,7 @@ function CheckoutStep({
             order_id: pix.orderId,
             payment_method: "pix",
           });
-          onPaid({ method: "pix", orderId: pix.orderId });
+          if (typeof window !== "undefined" && typeof window.fbq === "function") { window.fbq("track", "Purchase", { content_name: "Abraço Eterno - Homenagem em vídeo", value: PRICE_VALUE, currency: "BRL", num_items: 1 }); } onPaid({ method: "pix", orderId: pix.orderId });
         }
       } catch {
         // ignore
