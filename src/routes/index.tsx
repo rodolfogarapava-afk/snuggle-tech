@@ -630,7 +630,7 @@ function NameStep({
 }
 
 function UploadStep({ onPick }: { onPick: (f: File) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = "photo-upload";
   return (
     <div className="pt-8 space-y-5">
       <div className="text-center space-y-3">
@@ -651,9 +651,9 @@ function UploadStep({ onPick }: { onPick: (f: File) => void }) {
         </p>
       </div>
 
-      <button
-        onClick={() => inputRef.current?.click()}
-        className="w-full rounded-xl border-2 border-dashed border-[#c9a24a] bg-[#fdf6e3]/40 py-10 flex flex-col items-center gap-4 hover:bg-[#fdf6e3] transition"
+      <label
+        htmlFor={inputId}
+        className="w-full cursor-pointer rounded-xl border-2 border-dashed border-[#c9a24a] bg-[#fdf6e3]/40 py-10 flex flex-col items-center gap-4 hover:bg-[#fdf6e3] transition"
       >
         <span className="grid place-items-center h-14 w-14 rounded-full border border-[#c9a24a] text-[#8a6d3b]">
           <ImageIcon className="h-6 w-6" />
@@ -661,12 +661,12 @@ function UploadStep({ onPick }: { onPick: (f: File) => void }) {
         <span className="font-bold uppercase tracking-wide text-foreground">
           Escolher foto da galeria
         </span>
-      </button>
+      </label>
       <input
-        ref={inputRef}
+        id={inputId}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="sr-only"
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) onPick(f);
